@@ -55,6 +55,15 @@ int main(void)
 	/* touch screen calibration */
 	//	TS_Calibration();
 
+	GPIO_InitTypeDef timer;
+	timer.Mode = GPIO_MODE_IT_RISING;
+	timer.Speed = GPIO_SPEED_FAST;
+	timer.Alternate = 0;
+	timer.Pull = GPIO_NOPULL;
+	timer.Pin = 0;
+
+	HAL_GPIO_Init(GPIOA, &timer);
+
 	/* Clear the LCD and display basic starter text */
 	LCD_Clear(LCD_COLOR_BLACK);
 	LCD_SetTextColor(LCD_COLOR_YELLOW);
