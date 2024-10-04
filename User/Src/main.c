@@ -66,11 +66,11 @@ int main(void)
 	/* Configure the system clock */
 	SystemClock_Config();
 
-	HAL_NVIC_EnableIRQ(EXTI0_IRQn);
+
 
 	/* Initialize LCD and touch screen */
 	LCD_Init();
-	TS_Init(LCD_GetXSize(), LCD_GetYSize());
+//	TS_Init(LCD_GetXSize(), LCD_GetYSize());
 	/* touch screen calibration */
 	//	TS_Calibration();
 
@@ -79,18 +79,20 @@ int main(void)
 	timer.Speed = GPIO_SPEED_MEDIUM;
 	timer.Alternate = 0;
 	timer.Pull = GPIO_NOPULL;
-	timer.Pin = 0;
+	timer.Pin = GPIO_PIN_0;
 
 	HAL_GPIO_Init(GPIOA, &timer);
 
 	GPIO_InitTypeDef led;
-	led.Mode = GPIO_MODE_IT_RISING;
+	led.Mode = GPIO_MODE_OUTPUT_PP;
 	led.Speed = GPIO_SPEED_MEDIUM;
 	led.Alternate = 0;
 	led.Pull = GPIO_NOPULL;
-	led.Pin = 13;
+	led.Pin = GPIO_PIN_13;
 
 	HAL_GPIO_Init(GPIOG, &led);
+
+	HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 
 
 
@@ -136,20 +138,17 @@ int main(void)
 		LCD_SetFont(&Font20);
 		LCD_SetTextColor(LCD_COLOR_BLUE);
 		LCD_SetPrintPosition(5, 0);
-		printf("   Timer1: %.1i\n", timer1/1000);
-		printf("   Timer2: %.1i", timer2/1000);
+		printf("   Timer1: %i\n", timer1/10);
+		printf("   Timer2: %i", timer2/10);
 
 		// test touch interface
-		int x, y;
-		if (GetTouchState(&x, &y)) {
-			LCD_FillCircle(x, y, 5);
-		}
+//		int x, y;
+//		if (GetTouchState(&x, &y)) {
+//			LCD_FillCircle(x, y, 5);
+//		}
 
 
 	}
-
-	volatile void EXTI0_IRQHandler(void);
-
 
 
 }
