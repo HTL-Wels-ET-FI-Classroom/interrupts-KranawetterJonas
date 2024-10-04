@@ -41,6 +41,23 @@ void SysTick_Handler(void)
  * @brief  The application entry point.
  * @retval int
  */
+
+volatile int state = 1;
+
+void EXTI0_IRQHandler(void){
+
+	__HAL_GPIO_EXTI_CLEAR_IT(GPIO_PIN_0);
+
+	if(state ==1){
+		state = 2;
+	}else{
+		state = 1;
+	}
+
+
+}
+
+
 int main(void)
 {
 	/* MCU Configuration--------------------------------------------------------*/
@@ -48,6 +65,8 @@ int main(void)
 	HAL_Init();
 	/* Configure the system clock */
 	SystemClock_Config();
+
+	HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 
 	/* Initialize LCD and touch screen */
 	LCD_Init();
@@ -57,12 +76,24 @@ int main(void)
 
 	GPIO_InitTypeDef timer;
 	timer.Mode = GPIO_MODE_IT_RISING;
-	timer.Speed = GPIO_SPEED_FAST;
+	timer.Speed = GPIO_SPEED_MEDIUM;
 	timer.Alternate = 0;
 	timer.Pull = GPIO_NOPULL;
 	timer.Pin = 0;
 
 	HAL_GPIO_Init(GPIOA, &timer);
+
+	GPIO_InitTypeDef led;
+	led.Mode = GPIO_MODE_IT_RISING;
+	led.Speed = GPIO_SPEED_MEDIUM;
+	led.Alternate = 0;
+	led.Pull = GPIO_NOPULL;
+	led.Pin = 13;
+
+	HAL_GPIO_Init(GPIOG, &led);
+
+
+
 
 	/* Clear the LCD and display basic starter text */
 	LCD_Clear(LCD_COLOR_BLACK);
@@ -79,7 +110,10 @@ int main(void)
 
 	LCD_SetFont(&Font8);
 	LCD_SetColors(LCD_COLOR_MAGENTA, LCD_COLOR_BLACK); // TextColor, BackColor
-	LCD_DisplayStringAtLineMode(39, "copyright xyz", CENTER_MODE);
+	LCD_DisplayStringAtLineMode(39, "EXTI Interrupt", CENTER_MODE);
+
+	int timer1 = 0;
+	int timer2 = 0;
 
 	int cnt = 0;
 	/* Infinite loop */
@@ -90,10 +124,20 @@ int main(void)
 
 		// display timer
 		cnt++;
+
+		if(state ==1){
+			timer1++;
+
+		}else if (state == 2){
+			timer2++;
+
+		}
+
 		LCD_SetFont(&Font20);
 		LCD_SetTextColor(LCD_COLOR_BLUE);
 		LCD_SetPrintPosition(5, 0);
-		printf("   Timer: %.1f", cnt/10.0);
+		printf("   Timer1: %.1i\n", timer1/1000);
+		printf("   Timer2: %.1i", timer2/1000);
 
 		// test touch interface
 		int x, y;
@@ -103,6 +147,11 @@ int main(void)
 
 
 	}
+
+	volatile void EXTI0_IRQHandler(void);
+
+
+
 }
 
 /**
@@ -110,10 +159,11 @@ int main(void)
  * @param none
  * @return 1 if user button input (PA0) is high
  */
+/*
 static int GetUserButtonPressed(void) {
 	return (GPIOA->IDR & 0x0001);
 }
-
+*/
 /**
  * Check if touch interface has been used
  * @param xCoord x coordinate of touch event in pixels
