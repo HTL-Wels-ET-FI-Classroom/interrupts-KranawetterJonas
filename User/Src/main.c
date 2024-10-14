@@ -25,6 +25,13 @@
 
 /* Private variables ---------------------------------------------------------*/
 
+volatile static int state = 0;
+
+volatile static int timer1 = 0;
+volatile static int timer2 = 0;
+
+volatile static int colourswitch = 0;
+
 /* Private function prototypes -----------------------------------------------*/
 static int GetUserButtonPressed(void);
 static int GetTouchState (int *xCoord, int *yCoord);
@@ -35,6 +42,15 @@ static int GetTouchState (int *xCoord, int *yCoord);
 void SysTick_Handler(void)
 {
 	HAL_IncTick();
+
+	if(state ==0){
+		timer1++;
+
+	}else if (state == 1){
+		timer2++;
+
+	}
+
 }
 
 /**
@@ -42,20 +58,33 @@ void SysTick_Handler(void)
  * @retval int
  */
 
-volatile int state = 1;
+
 
 void EXTI0_IRQHandler(void){
 
 	__HAL_GPIO_EXTI_CLEAR_IT(GPIO_PIN_0);
 
-	if(state ==1){
-		state = 2;
-	}else{
+	if(state ==0){
 		state = 1;
+	}else if(state == 1){
+		state = 0;
 	}
 
 
 }
+
+void EXTI3_IRQHandler(void){
+
+	__HAL_GPIO_EXTI_CLEAR_IT(GPIO_PIN_3);
+
+	if(colourswitch ==0){
+		colourswitch = 1;
+	}else if(colourswitch == 1){
+		colourswitch = 0;
+	}
+
+}
+
 
 
 int main(void)
@@ -70,7 +99,7 @@ int main(void)
 
 	/* Initialize LCD and touch screen */
 	LCD_Init();
-//	TS_Init(LCD_GetXSize(), LCD_GetYSize());
+	//	TS_Init(LCD_GetXSize(), LCD_GetYSize());
 	/* touch screen calibration */
 	//	TS_Calibration();
 
@@ -83,18 +112,21 @@ int main(void)
 
 	HAL_GPIO_Init(GPIOA, &timer);
 
-	GPIO_InitTypeDef led;
-	led.Mode = GPIO_MODE_OUTPUT_PP;
-	led.Speed = GPIO_SPEED_MEDIUM;
-	led.Alternate = 0;
-	led.Pull = GPIO_NOPULL;
-	led.Pin = GPIO_PIN_13;
-
-	HAL_GPIO_Init(GPIOG, &led);
 
 	HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 
 
+	GPIO_InitTypeDef colour;
+	colour.Mode = GPIO_MODE_IT_RISING;
+	colour.Speed = GPIO_SPEED_MEDIUM;
+	colour.Alternate = 0;
+	colour.Pull = GPIO_PULLUP;
+	colour.Pin = GPIO_PIN_3;
+
+	HAL_GPIO_Init(GPIOG, &colour);
+
+
+	HAL_NVIC_EnableIRQ(EXTI3_IRQn);
 
 
 	/* Clear the LCD and display basic starter text */
@@ -114,38 +146,42 @@ int main(void)
 	LCD_SetColors(LCD_COLOR_MAGENTA, LCD_COLOR_BLACK); // TextColor, BackColor
 	LCD_DisplayStringAtLineMode(39, "EXTI Interrupt", CENTER_MODE);
 
-	int timer1 = 0;
-	int timer2 = 0;
 
-	int cnt = 0;
+	int colourtimer = LCD_COLOR_RED;
 	/* Infinite loop */
 	while (1)
 	{
-		//execute main loop every 100ms
-		HAL_Delay(100);
 
-		// display timer
-		cnt++;
 
-		if(state ==1){
-			timer1++;
+		if(colourswitch ==0){
+			colourtimer = LCD_COLOR_RED;
 
-		}else if (state == 2){
-			timer2++;
+		}else if(colourswitch == 1){
+			colourtimer = LCD_COLOR_GREEN;
 
 		}
 
+
+		//execute main loop every 100ms
+
+
+		// display timer
+
+
+
 		LCD_SetFont(&Font20);
-		LCD_SetTextColor(LCD_COLOR_BLUE);
+		LCD_SetTextColor(colourtimer);
 		LCD_SetPrintPosition(5, 0);
-		printf("   Timer1: %i\n", timer1/10);
-		printf("   Timer2: %i", timer2/10);
+		printf("   Timer1: %.1f", timer1/1000.0);
+		LCD_SetPrintPosition(6, 0);
+		printf("   Timer2: %.1f", timer2/1000.0);
 
 		// test touch interface
-//		int x, y;
-//		if (GetTouchState(&x, &y)) {
-//			LCD_FillCircle(x, y, 5);
-//		}
+		//		int x, y;
+		//		if (GetTouchState(&x, &y)) {
+		//			LCD_FillCircle(x, y, 5);
+		//		}
+
 
 
 	}
@@ -162,7 +198,7 @@ int main(void)
 static int GetUserButtonPressed(void) {
 	return (GPIOA->IDR & 0x0001);
 }
-*/
+ */
 /**
  * Check if touch interface has been used
  * @param xCoord x coordinate of touch event in pixels
